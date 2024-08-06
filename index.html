@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaflet Map with Multiple GeoJSON Layers, Dynamic Legend, and City Manager</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <!-- Leaflet MiniMap CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-minimap/dist/Control.MiniMap.min.css" />
+    <!-- Open Sans Font -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap">
+    <style>
+        /* General style settings */
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow:auto;
+            font-family: 'Open Sans', sans-serif;
+        }
+        /* Grid layout */
+        .container {
+            display: grid;
+            grid-template-columns: 20% 1fr 1fr 1fr 1fr 1fr;
+            grid-template-rows: 15% 1fr 1fr 1fr 1fr;
+            gap: 10px;
+            grid-template-areas:
+                "Logo Map Map Map Map Map"
+                "Side-Bar Map Map Map Map Map"
+                "Side-Bar Map Map Map Map Map"
+                "Side-Bar Map Map Map Map Map"
+                "Side-Bar Map Map Map Map Map";
+            height: 100%;
+        }
+        /* Logo style */
+        .Logo {
+            grid-area: Logo;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .Logo img {
+            max-width: 80%;
+            max-height: 80%;
+        }
+        /* Side-Bar style */
+        .Side-Bar {
+            grid-area: Side-Bar;
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        .Side-Bar h1 {
+            font-weight: bold;
+            font-size: 16pt;
+            margin: 0;
+            text-align: center;
+        }
+        .Side-Bar p {
+            font-size: 11pt;
+            margin: 0;
+            text-align: justify;
+        }
+        /* Map container style */
+        .map-container {
+            grid-area: Map;
+            height: 100%;
+            position: relative;
+        }
+        .map-container .leaflet-container {
+            height: 100%;
+            width: 100%;
+        }
+        /* Legend style */
+        .legend {
+            background-color: rgba(255, 255, 255, 0.6);
+            padding: 10px;
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-family: 'Open Sans', sans-serif;
+        }
+        .legend h4, .legend h5 {
+            margin: 0;
+            font-weight: 600;
+        }
+        .legend img {
+            display: block;
+            margin-top: 5px;
+        }
+        /* City manager style */
+        #city-manager {
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin: 10px;
+        }
+        #city-manager label {
+            font-weight: 600;
+            font-size: 14pt;
+        }
+        #city-manager select {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        /* Media queries */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto 1fr;
+                grid-template-areas:
+                    "Logo"
+                    "Side-Bar"
+                    "Map";
+            }
+            .Logo {
+                justify-content: center;
+                align-items: center;
+                height: 80px;
+            }
+            .Side-Bar {
+                padding: 10px;
+                height: auto;
+            }
+            .map-container {
+                height: calc(100vh - 160px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Logo Area -->
+        <div class="Logo">
+            <img src="https://upload.wikimedia.org/wikipedia/tr/4/40/Tarihi_Kentler_Birli%C4%9Fi_logo.png" alt="Logo">
+        </div>
+        <!-- Side Panel (Side-Bar) -->
+        <div class="Side-Bar">
+            <h1>Tarihi Kentler Birliği</h1>
+            <p>
+                Bu haritanın açıklaması burada yer alır. Açıklamanın bu kısmı yer doldurucu metin olarak kullanılıyor ve sola yaslanarak hizalanmıştır.
+                Açıklama kısmı sayfa düzenini ve içerik akışını koruyacak şekilde tasarlanmıştır.
+                Bu haritanın açıklaması burada yer alır. Açıklamanın bu kısmı yer doldurucu metin olarak kullanılıyor ve sola yaslanarak hizalanmıştır.
+                Açıklama kısmı sayfa düzenini ve içerik akışını koruyacak şekilde tasarlanmıştır.
+            </p>
+            <!-- City Manager -->
+            <div id="city-manager">
+                <label for="cities">Şehirler:</label>
+                <select id="cities">
+                    <!-- "Şehir seçiniz" option will be shown by default -->
+                </select>
+            </div>
+        </div>
+        <!-- Map Container -->
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+    </div>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- Leaflet MiniMap JS -->
+    <script src="https://unpkg.com/leaflet-minimap/dist/Control.MiniMap.min.js"></script>
+    <script>
+        // Map center and initial zoom level
+        var centerCoordinates = [39.1857714880652, 36.07168635641419];
+        var zoomLevel = 6;
+        var minZoomLevel = 5;
+
+        // Map bounds (Turkey)
+        var southWest = L.latLng(33.0, 25.0);
+        var northEast = L.latLng(43, 46.0);
+        var bounds = L.latLngBounds(southWest, northEast);
+
+        // Create the map
+        var map = L.map('map', {
+            center: centerCoordinates,
+            zoom: zoomLevel,
+            minZoom: minZoomLevel,
+            layers: [],
+            maxBounds: bounds,
+            maxBoundsViscosity: 1.0
+        });
+
+        // Base layer
+        var baseLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/light_nolabels/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://carto.com/">Carto</a>',
+            noWrap: true
+        }).addTo(map);
+
+        // GeoJSON Layers
+        var geoJSONLayers = {
+            "Layer 1": null,
+            "Layer 2": null,
+            "Layer 3": null,
+            "Layer 4": null,
+            "Layer 5": null
+        };
+
+        // Function to load GeoJSON layers
+        function loadGeoJSONLayer(name, url, style) {
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    geoJSONLayers[name] = L.geoJSON(data, {
+                        style: style
+                    });
+                    updateLayerControl();
+                });
+        }
+
+        // Load GeoJSON layers (replace with your GitHub URLs)
+        loadGeoJSONLayer("Tüm İl Sınırları", "https://raw.githubusercontent.com/mihracnar/Leaflet-Map-with-Multiple-WMS-Layers-Dynamic-Legend-and-City-Manage/4e5921bc592bb3a9bd72726a5d3bc981dc8d8fcc/geojson/tum_il_sinirlari.geojson", {
+    color: 'black', // Dış sınır rengi
+    weight: 0.75, // Sınır kalınlığı
+    fillColor: 'transparent', // İç renk, 'transparent' olarak ayarlandı
+    fillOpacity: 0 // İç opaklık, görünmemesi için 0
+});
+        loadGeoJSONLayer("Layer 2", "https://raw.githubusercontent.com/your-repo/layer2.geojson", {color: 'blue'});
+        // Add more layers as needed
+
+        // Layer Control
+        var baseMaps = {
+            "Carto Light No Labels": baseLayer
+        };
+
+        var overlayMaps = {};
+
+        function updateLayerControl() {
+            if (map.layerControl) {
+                map.removeControl(map.layerControl);
+            }
+            for (var key in geoJSONLayers) {
+                if (geoJSONLayers[key]) {
+                    overlayMaps[key] = geoJSONLayers[key];
+                }
+            }
+            map.layerControl = L.control.layers(baseMaps, overlayMaps, {position: 'topright', collapsed: false}).addTo(map);
+        }
+
+        // Legend control
+        var legend = L.control({position: 'bottomright'});
+
+        legend.onAdd = function(map) {
+            var div = L.DomUtil.create('div', 'legend');
+            div.innerHTML = '<h4>Legend</h4>';
+            return div;
+        };
+
+        legend.addTo(map);
+
+        function updateLegend() {
+            var legendDiv = document.querySelector('.legend');
+            legendDiv.innerHTML = '<h4>Legend</h4>';
+            map.eachLayer(function(layer) {
+                if (layer instanceof L.GeoJSON) {
+                    var layerName = getLayerName(layer);
+                    if (layerName) {
+                        var color = layer.options.style.color;
+                        legendDiv.innerHTML += `<div><span style="background-color:${color}; width:20px; height:20px; display:inline-block;"></span> ${layerName}</div>`;
+                    }
+                }
+            });
+        }
+
+        function getLayerName(layer) {
+            for (var name in geoJSONLayers) {
+                if (geoJSONLayers[name] === layer) {
+                    return name;
+                }
+            }
+            return null;
+        }
+
+        map.on('overlayadd', function() {
+            updateLegend();
+        });
+
+        map.on('overlayremove', function() {
+            updateLegend();
+        });
+
+        // Mini Map
+        var miniMapLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/light_nolabels/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://carto.com/">Carto</a>'
+        });
+
+        new L.Control.MiniMap(miniMapLayer, {
+            toggleDisplay: true,
+            minimized: false,
+            position: 'bottomleft'
+        }).addTo(map);
+
+        // Cities (Bookmark) Manager
+        var cities = {
+            "Şehir seçiniz": {center: centerCoordinates, zoom: zoomLevel},
+            "İstanbul": {center: [41.0082, 28.9784], zoom: 10},
+            "Ankara": {center: [39.9334, 32.8597], zoom: 10},
+            "İzmir": {center: [38.4192, 27.1287], zoom: 11},
+            "Antalya": {center: [36.8841, 30.7056], zoom: 11},
+            "Adana": {center: [37.0017, 35.3289], zoom: 11}
+        };
+
+        var citySelect = document.getElementById('cities');
+
+        var defaultOption = document.createElement('option');
+        defaultOption.value = "";
+        defaultOption.textContent = "Şehir seçiniz";
+        defaultOption.selected = true;
+        citySelect.appendChild(defaultOption);
+
+        Object.keys(cities).forEach(function(name) {
+            if (name !== "Şehir seçiniz") {
+                var option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                citySelect.appendChild(option);
+            }
+        });
+
+        citySelect.addEventListener('change', function() {
+            var selectedCity = citySelect.value;
+            var city = cities[selectedCity];
+            if (city) {
+                map.setView(city.center, city.zoom);
+            }
+        });
+    </script>
+</body>
+</html>
