@@ -228,8 +228,10 @@
 
         // Load GeoJSON layers (replace with your GitHub URLs)
         loadGeoJSONLayer("Tüm İl Sınırları", "https://raw.githubusercontent.com/mihracnar/Leaflet-Map-with-Multiple-WMS-Layers-Dynamic-Legend-and-City-Manage/4e5921bc592bb3a9bd72726a5d3bc981dc8d8fcc/geojson/tum_il_sinirlari.geojson", {
-    color: 'grey', // Dış sınır rengi
-    weight: 0.75, // Sınır kalınlığı
+    color: 'red', // Dış sınır rengi
+    weight: 1, // Sınır kalınlığı
+    dashArray: '2, 2', // Kısa çizgiler
+    opacity: 0.45,
     fillColor: 'transparent', // İç renk, 'transparent' olarak ayarlandı
     fillOpacity: 0 // İç opaklık, görünmemesi için 0
 });
