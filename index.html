@@ -279,16 +279,16 @@
         fillOpacity: 0 // İç opaklık, görünmemesi için 0
         }, 'City');
         
-        loadGeoJSONLayer("Layer 2", "https://raw.githubusercontent.com/your-repo/layer2.geojson", {color: 'blue'});
-        // Add more layers as needed
-        loadGeoJSONLayer("Yeni Katman Adı", "https://raw.githubusercontent.com/your-repo/your-geojson-file.geojson", {
-        color: 'your-color',
-        weight: 1,
-        dashArray: 'your-dash-array',
-        opacity: 0.45,
-        fillColor: 'your-fill-color',
+        loadGeoJSONLayer("Üye Büyükşehirler", "https://raw.githubusercontent.com/mihracnar/Leaflet-Map-with-Multiple-Geojson-Layers-Dynamic-Legend-and-City-Manage-Public/main/Geojson/uye_buyuksehir.geojson", {
+        color: 'grey',
+        weight: 0,
+        dashArray: '5, 5',
+        opacity: 0,
+        fillColor: 'black',
         fillOpacity: 0.2
         }, 'your-label-property');
+        
+        // Add more layers as needed
         
         // Layer Control
         var baseMaps = {
