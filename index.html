@@ -119,6 +119,16 @@
             border: 1px solid #ccc;
             border-radius: 5px;
         }
+        .geojson-label {
+            background-color: transparent;
+            border: none;
+            box-shadow: none;
+            font-family: 'Open Sans', sans-serif;
+            font-weight: bold;
+            font-size: 12px;
+            color: red;
+            text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
+        }
 
         /* Media queries */
         @media (max-width: 768px) {
@@ -173,6 +183,8 @@
             <div id="map"></div>
         </div>
     </div>
+    <!-- Turf JS -->
+    <script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <!-- Leaflet MiniMap JS -->
@@ -215,29 +227,69 @@
         };
 
         // Function to load GeoJSON layers
-        function loadGeoJSONLayer(name, url, style) {
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    geoJSONLayers[name] = L.geoJSON(data, {
-                        style: style
-                    });
-                    updateLayerControl();
-                });
+        function loadGeoJSONLayer(name, url, style, labelProperty) {
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            geoJSONLayers[name] = L.geoJSON(data, {
+                style: style,
+                onEachFeature: function(feature, layer) {
+                    if (feature.properties && feature.properties[labelProperty]) {
+                        let labelPoint;
+                        
+                        if (feature.geometry.type === 'MultiPolygon') {
+                            // Find the largest polygon
+                            let largestPolygon = feature.geometry.coordinates.reduce((largest, polygon) => {
+                                let area = turf.area(turf.polygon(polygon));
+                                return area > largest.area ? {polygon, area} : largest;
+                            }, {polygon: null, area: 0}).polygon;
+                            
+                            labelPoint = turf.centroid(turf.polygon(largestPolygon));
+                        } else {
+                            // For single polygons or other geometry types
+                            labelPoint = turf.centroid(feature);
+                        }
+
+                        L.marker(
+                            [labelPoint.geometry.coordinates[1], labelPoint.geometry.coordinates[0]], 
+                            {
+                                icon: L.divIcon({
+                                    className: 'geojson-label',
+                                    html: feature.properties[labelProperty]
+                                }),
+                                interactive: false
+                            }
+                        ).addTo(map);
+                    }
+                }
+            });
+            updateLayerControl();
+            geoJSONLayers[name].addTo(map); // Add layer to map by default
+        });
         }
 
         // Load GeoJSON layers (replace with your GitHub URLs)
+        
         loadGeoJSONLayer("Tüm İl Sınırları", "https://raw.githubusercontent.com/mihracnar/Leaflet-Map-with-Multiple-WMS-Layers-Dynamic-Legend-and-City-Manage/4e5921bc592bb3a9bd72726a5d3bc981dc8d8fcc/geojson/tum_il_sinirlari.geojson", {
-    color: 'red', // Dış sınır rengi
-    weight: 1, // Sınır kalınlığı
-    dashArray: '2, 2', // Kısa çizgiler
-    opacity: 0.45,
-    fillColor: 'transparent', // İç renk, 'transparent' olarak ayarlandı
-    fillOpacity: 0 // İç opaklık, görünmemesi için 0
-});
+        color: 'red', // Dış sınır rengi
+        weight: 1, // Sınır kalınlığı
+        dashArray: '2, 2', // Kısa çizgiler
+        opacity: 0.45,
+        fillColor: 'transparent', // İç renk, 'transparent' olarak ayarlandı
+        fillOpacity: 0 // İç opaklık, görünmemesi için 0
+        }, 'City');
+        
         loadGeoJSONLayer("Layer 2", "https://raw.githubusercontent.com/your-repo/layer2.geojson", {color: 'blue'});
         // Add more layers as needed
-
+        loadGeoJSONLayer("Yeni Katman Adı", "https://raw.githubusercontent.com/your-repo/your-geojson-file.geojson", {
+        color: 'your-color',
+        weight: 1,
+        dashArray: 'your-dash-array',
+        opacity: 0.45,
+        fillColor: 'your-fill-color',
+        fillOpacity: 0.2
+        }, 'your-label-property');
+        
         // Layer Control
         var baseMaps = {
             "Carto Light No Labels": baseLayer
