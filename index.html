@@ -83,19 +83,16 @@
         }
         /* Legend style */
         .legend {
-            background-color: rgba(255, 255, 255, 0.6);
+            background-color: rgba(255, 255, 255, 0.8);
             padding: 10px;
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            border: 2px solid #ccc;
             border-radius: 5px;
-            box-sizing: border-box;
-            font-family: 'Open Sans', sans-serif;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            line-height: 1.5;
         }
-        .legend h4, .legend h5 {
-            margin: 0;
-            font-weight: 600;
+        .legend h4 {
+            margin: 0 0 10px;
+            font-size: 16px;
+        }
         }
         .legend img {
             display: block;
@@ -156,6 +153,14 @@
     </style>
 </head>
 <body>
+    <svg width="0" height="0">
+    <defs>
+        <pattern id="hatchPattern" width="10" height="10" patternUnits="userSpaceOnUse">
+            <path d="M5,0 L5,10" style="stroke:grey; stroke-width:0.75" />
+        </pattern>
+    </defs>
+</svg>
+
     <div class="container">
         <!-- Logo Area -->
         <div class="Logo">
@@ -227,23 +232,32 @@
         };
 
         // Function to load GeoJSON layers
-        function loadGeoJSONLayer(name, url, style, labelProperty) {
+        function loadGeoJSONLayer(name, url, style, labelProperty, useHatchPattern = false) {
     fetch(url)
         .then(response => response.json())
         .then(data => {
             geoJSONLayers[name] = L.geoJSON(data, {
-                style: style,
-                onEachFeature: function(feature, layer) {
+                style: function (feature) {
+                    let appliedStyle = { ...style };
+                    
+                    if (useHatchPattern) {
+                        appliedStyle.fillColor = 'url(#hatchPattern)';
+                        appliedStyle.fillOpacity = 1;
+                    }
+
+                    return appliedStyle;
+                },
+                onEachFeature: function (feature, layer) {
                     if (feature.properties && feature.properties[labelProperty]) {
                         let labelPoint;
-                        
+
                         if (feature.geometry.type === 'MultiPolygon') {
                             // Find the largest polygon
                             let largestPolygon = feature.geometry.coordinates.reduce((largest, polygon) => {
                                 let area = turf.area(turf.polygon(polygon));
-                                return area > largest.area ? {polygon, area} : largest;
-                            }, {polygon: null, area: 0}).polygon;
-                            
+                                return area > largest.area ? { polygon, area } : largest;
+                            }, { polygon: null, area: 0 }).polygon;
+
                             labelPoint = turf.centroid(turf.polygon(largestPolygon));
                         } else {
                             // For single polygons or other geometry types
@@ -251,7 +265,7 @@
                         }
 
                         L.marker(
-                            [labelPoint.geometry.coordinates[1], labelPoint.geometry.coordinates[0]], 
+                            [labelPoint.geometry.coordinates[1], labelPoint.geometry.coordinates[0]],
                             {
                                 icon: L.divIcon({
                                     className: 'geojson-label',
@@ -266,7 +280,7 @@
             updateLayerControl();
             geoJSONLayers[name].addTo(map); // Add layer to map by default
         });
-        }
+}
 
         // Load GeoJSON layers (replace with your GitHub URLs)
         
@@ -277,16 +291,16 @@
         opacity: 0.45,
         fillColor: 'transparent', // İç renk, 'transparent' olarak ayarlandı
         fillOpacity: 0 // İç opaklık, görünmemesi için 0
-        }, 'City');
+        }, 'City', false);
         
         loadGeoJSONLayer("Üye Büyükşehirler", "https://raw.githubusercontent.com/mihracnar/Leaflet-Map-with-Multiple-Geojson-Layers-Dynamic-Legend-and-City-Manage-Public/main/Geojson/uye_buyuksehir.geojson", {
         color: 'grey',
         weight: 0,
         dashArray: '5, 5',
         opacity: 0,
-        fillColor: 'black',
+        fillColor: 'grey',
         fillOpacity: 0.2
-        }, 'your-label-property');
+        }, 'your-label-property', true);
         
         // Add more layers as needed
         
@@ -321,18 +335,44 @@
         legend.addTo(map);
 
         function updateLegend() {
-            var legendDiv = document.querySelector('.legend');
-            legendDiv.innerHTML = '<h4>Legend</h4>';
-            map.eachLayer(function(layer) {
-                if (layer instanceof L.GeoJSON) {
-                    var layerName = getLayerName(layer);
-                    if (layerName) {
-                        var color = layer.options.style.color;
-                        legendDiv.innerHTML += `<div><span style="background-color:${color}; width:20px; height:20px; display:inline-block;"></span> ${layerName}</div>`;
-                    }
+    var legendDiv = document.querySelector('.legend');
+    legendDiv.innerHTML = '<h4>Lejant</h4>';
+    map.eachLayer(function(layer) {
+        if (layer instanceof L.GeoJSON) {
+            var layerName = getLayerName(layer);
+            if (layerName) {
+                var style = layer.options.style;
+                var color = typeof style === 'function' ? style().color : style.color;
+                var fillColor = typeof style === 'function' ? style().fillColor : style.fillColor;
+                var weight = typeof style === 'function' ? style().weight : style.weight;
+                var dashArray = typeof style === 'function' ? style().dashArray : style.dashArray;
+
+                var legendItem = document.createElement('div');
+                legendItem.style.marginBottom = '5px';
+
+                if (fillColor === 'url(#hatchPattern)') {
+                    // Taramalı polygon için
+                    legendItem.innerHTML = `
+                        <svg width="20" height="20" style="vertical-align: middle;">
+                            <rect width="20" height="20" fill="url(#hatchPattern)" stroke="grey" stroke-width="1"/>
+                        </svg>
+                        <span style="margin-left: 5px;">${layerName}</span>
+                    `;
+                } else if (weight > 0 && fillColor === 'transparent') {
+                    // Sadece dış çizgili polygon için
+                    legendItem.innerHTML = `
+                        <svg width="20" height="20" style="vertical-align: middle;">
+                            <rect width="20" height="20" fill="none" stroke="${color}" stroke-width="${weight}" stroke-dasharray="${dashArray}"/>
+                        </svg>
+                        <span style="margin-left: 5px;">${layerName}</span>
+                    `;
                 }
-            });
+
+                legendDiv.appendChild(legendItem);
+            }
         }
+    });
+}
 
         function getLayerName(layer) {
             for (var name in geoJSONLayers) {
