@@ -16,7 +16,7 @@
         margin: 0;
         padding-bottom: 50px;
         height: 100vh;
-        overflow-y: hidden;
+        overflow-y: auto;
         overflow-x: hidden;
         font-family: 'Open Sans', sans-serif;
     }
@@ -161,7 +161,7 @@
     <svg width="0" height="0">
     <defs>
         <pattern id="hatchPattern" width="5" height="10" patternUnits="userSpaceOnUse">
-            <path d="M5,0 L5,10" style="stroke:#3e3e3e; stroke-width:0.75" />
+            <path d="M5,0 L5,10" style="stroke:#242424; stroke-width:1" />
         </pattern>
     </defs>
 </svg>
@@ -242,7 +242,7 @@
         };
 
         // Function to load GeoJSON layers
-        function loadGeoJSONLayer(name, url, style, labelProperty, useHatchPattern = false) {
+        function loadGeoJSONLayer(name, url, style, labelProperty, useHatchPattern = false, zIndex = 0) {
     fetch(url)
         .then(response => response.json())
         .then(data => {
@@ -287,30 +287,58 @@
                     }
                 }
             });
+            geoJSONLayers[name].setZIndex(zIndex);
             updateLayerControl();
             geoJSONLayers[name].addTo(map); // Add layer to map by default
         });
-}
+        }
 
         // Load GeoJSON layers (replace with your GitHub URLs)
         
         loadGeoJSONLayer("Tüm İl Sınırları", "https://raw.githubusercontent.com/mihracnar/Leaflet-Map-with-Multiple-Geojson-Layers-Dynamic-Legend-and-City-Manage-Public/3a77412da592008be7669bae5f6c03db379f4897/Geojson/tum_iller_simplified.geojson", {
         color: 'red', // Dış sınır rengi
-        weight: 1, // Sınır kalınlığı
+        weight: 1.75, // Sınır kalınlığı
         dashArray: '2, 2', // Kısa çizgiler
-        opacity: 0.45,
+        opacity: 0.95,
         fillColor: 'transparent', // İç renk, 'transparent' olarak ayarlandı
         fillOpacity: 0 // İç opaklık, görünmemesi için 0
-        }, 'City', false);
+        }, 'City', false, 5);
         
-        loadGeoJSONLayer("Üye Büyükşehirler", "https://raw.githubusercontent.com/mihracnar/Leaflet-Map-with-Multiple-Geojson-Layers-Dynamic-Legend-and-City-Manage-Public/main/Geojson/uye_buyuksehir.geojson", {
+        loadGeoJSONLayer("Üye Büyükşehir", "https://raw.githubusercontent.com/mihracnar/Leaflet-Map-with-Multiple-Geojson-Layers-Dynamic-Legend-and-City-Manage-Public/main/Geojson/uye_buyuksehir.geojson", {
         color: 'grey',
         weight: 0,
         dashArray: '5, 5',
         opacity: 0,
         fillColor: 'grey',
         fillOpacity: 0.2
-        }, 'your-label-property', true);
+        }, 'your-label-property', true, 4);
+        
+        loadGeoJSONLayer("Üye İl Merkez İlçe", "https://raw.githubusercontent.com/mihracnar/Leaflet-Map-with-Multiple-Geojson-Layers-Dynamic-Legend-and-City-Manage-Public/519158bef5ef2c644bcc35051d1c297664c49d4c/Geojson/uye_il_merkez_ilce.geojson", {
+        color: '#ff2727 ', // Dış sınır rengi
+        weight: 1, // Sınır kalınlığı
+        dashArray: '', // Kısa çizgiler
+        opacity: 0.30,
+        fillColor: '#ff2727 ', // İç renk, 'transparent' olarak ayarlandı
+        fillOpacity: 0.30, // İç opaklık, görünmemesi için 0
+        }, '-', false, 3);
+        
+        loadGeoJSONLayer("Üye İlçe", "https://raw.githubusercontent.com/mihracnar/Leaflet-Map-with-Multiple-Geojson-Layers-Dynamic-Legend-and-City-Manage-Public/c8b533873595075f696886caff1313d19dd016de/Geojson/uye_ilce.geojson", {
+        color: '', // Dış sınır rengi
+        weight: 1, // Sınır kalınlığı
+        dashArray: '', // Kısa çizgiler
+        opacity: 0.30,
+        fillColor: '#07b86d', // İç renk, 'transparent' olarak ayarlandı
+        fillOpacity: 0.30, // İç opaklık, görünmemesi için 0
+        }, '-', false, 2);
+
+        loadGeoJSONLayer("Tüm İlçe Sınırları", "https://raw.githubusercontent.com/mihracnar/Leaflet-Map-with-Multiple-Geojson-Layers-Dynamic-Legend-and-City-Manage-Public/cf5bdcef3c926da055fb560f74df55dc8198614e/Geojson/tum_ilce_sinirlari.geojson", {
+        color: 'grey', // Dış sınır rengi
+        weight: 1, // Sınır kalınlığı
+        dashArray: '5, 2', // Kısa çizgiler
+        opacity: 0.45,
+        fillColor: 'transparent', // İç renk, 'transparent' olarak ayarlandı
+        fillOpacity: 0 // İç opaklık, görünmemesi için 0
+        }, '', false, 1);
         
         // Add more layers as needed
         
@@ -345,9 +373,9 @@
         legend.addTo(map);
 
         function updateLegend() {
-        var legendDiv = document.querySelector('.legend');
-        legendDiv.innerHTML = '<h4>Lejant</h4>';
-        map.eachLayer(function(layer) {
+    var legendDiv = document.querySelector('.legend');
+    legendDiv.innerHTML = '<h4>Lejant</h4>';
+    map.eachLayer(function(layer) {
         if (layer instanceof L.GeoJSON) {
             var layerName = getLayerName(layer);
             if (layerName) {
@@ -356,15 +384,16 @@
                 var fillColor = typeof style === 'function' ? style().fillColor : style.fillColor;
                 var weight = typeof style === 'function' ? style().weight : style.weight;
                 var dashArray = typeof style === 'function' ? style().dashArray : style.dashArray;
+                var fillOpacity = typeof style === 'function' ? style().fillOpacity : style.fillOpacity;
 
                 var legendItem = document.createElement('div');
                 legendItem.style.marginBottom = '5px';
 
-                if (fillColor === 'url(#hatchPattern)') {
-                    // Taramalı polygon için
+                if (fillColor && fillOpacity !== undefined) {
+                    // Hem iç renkli hem de dış çizgili polygon için
                     legendItem.innerHTML = `
                         <svg width="20" height="20" style="vertical-align: middle;">
-                            <rect width="20" height="20" fill="url(#hatchPattern)" stroke="grey" stroke-width="1"/>
+                            <rect width="20" height="20" fill="${fillColor}" stroke="${color}" stroke-width="${weight}" stroke-dasharray="${dashArray}" fill-opacity="${fillOpacity}"/>
                         </svg>
                         <span style="margin-left: 5px;">${layerName}</span>
                     `;
@@ -373,6 +402,14 @@
                     legendItem.innerHTML = `
                         <svg width="20" height="20" style="vertical-align: middle;">
                             <rect width="20" height="20" fill="none" stroke="${color}" stroke-width="${weight}" stroke-dasharray="${dashArray}"/>
+                        </svg>
+                        <span style="margin-left: 5px;">${layerName}</span>
+                    `;
+                } else if (fillColor === 'transparent' && weight === 0) {
+                    // Dış çizgisi olmayan ve içi görünür polygon için
+                    legendItem.innerHTML = `
+                        <svg width="20" height="20" style="vertical-align: middle;">
+                            <rect width="20" height="20" fill="${fillColor}" fill-opacity="${fillOpacity}"/>
                         </svg>
                         <span style="margin-left: 5px;">${layerName}</span>
                     `;
