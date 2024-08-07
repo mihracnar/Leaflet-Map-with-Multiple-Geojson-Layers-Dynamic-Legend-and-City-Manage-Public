@@ -11,111 +11,115 @@
     <!-- Open Sans Font -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap">
     <style>
-        /* General style settings */
-        body {
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow:auto;
-            font-family: 'Open Sans', sans-serif;
-        }
-        /* Grid layout */
-        .container {
-            display: grid;
-            grid-template-columns: 20% 1fr 1fr 1fr 1fr 1fr;
-            grid-template-rows: 15% 1fr 1fr 1fr 1fr;
-            gap: 10px;
-            grid-template-areas:
-                "Logo Map Map Map Map Map"
-                "Side-Bar Map Map Map Map Map"
-                "Side-Bar Map Map Map Map Map"
-                "Side-Bar Map Map Map Map Map"
-                "Side-Bar Map Map Map Map Map";
-            height: 100%;
-        }
-        /* Logo style */
-        .Logo {
-            grid-area: Logo;
-            background-color: white;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .Logo img {
-            max-width: 80%;
-            max-height: 80%;
-        }
-        /* Side-Bar style */
-        .Side-Bar {
-            grid-area: Side-Bar;
-            background-color: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-        }
-        .Side-Bar h1 {
-            font-weight: bold;
-            font-size: 16pt;
-            margin: 0;
-            text-align: center;
-        }
-        .Side-Bar p {
-            font-size: 11pt;
-            margin: 0;
-            text-align: justify;
-        }
-        /* Map container style */
-        .map-container {
-            grid-area: Map;
-            height: 100%;
-            position: relative;
-        }
-        .map-container .leaflet-container {
-            height: 100%;
-            width: 100%;
-        }
-        /* Legend style */
-        .legend {
-            background-color: rgba(255, 255, 255, 0.8);
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.2);
-            line-height: 1.5;
-        }
-        .legend h4 {
-            margin: 0 0 10px;
-            font-size: 16px;
-        }
-        }
-        .legend img {
-            display: block;
-            margin-top: 5px;
-        }
-        /* City manager style */
-        #city-manager {
-            background-color: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            margin: 10px;
-        }
-        #city-manager label {
-            font-weight: 600;
-            font-size: 14pt;
-        }
-        #city-manager select {
-            width: 100%;
-            padding: 5px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
+    /* General style settings */
+    body {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        overflow: hidden;
+        font-family: 'Open Sans', sans-serif;
+    }
+    /* Grid layout */
+    .container {
+        display: grid;
+        grid-template-columns: 20% 1fr;
+        grid-template-rows: auto 1fr;
+        gap: 10px;
+        grid-template-areas:
+            "Logo Map"
+            "Side-Bar Map";
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden; /* Taşan içeriği gizle */
+    }
+    /* Logo style */
+    .Logo {
+        grid-area: Logo;
+        background-color: white;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 10px;
+    }
+    .Logo img {
+        max-width: 80%;
+        max-height: 80%;
+    }
+    /* Side-Bar style */
+    .Side-Bar {
+        grid-area: Side-Bar;
+        background-color: white;
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        overflow-y: auto;
+    }
+    .Side-Bar h1 {
+        font-weight: bold;
+        font-size: 12pt;
+        margin: 0;
+        text-align: center;
+    }
+    .Side-Bar p {
+        font-size: 9pt;
+        margin: 0;
+        text-align: justify;
+    }
+    /* Map container style */
+    .map-container {
+        grid-area: Map;
+        position: relative;
+        height: 100%;
+        width: 100%;
+        overflow: hidden; /* Taşan içeriği gizle */
+    }
+    .map-container .leaflet-container {
+        height: 100%;
+        width: 100%;
+    }
+    
+    /* Legend style */
+    .legend {
+        background-color: rgba(255, 255, 255, 0.8);
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        line-height: 1.5;
+        max-height: calc(100% - 20px);
+        overflow-y: auto;
+    }
+    .legend h4 {
+        margin: 0 0 10px;
+        font-size: 14px;
+    }
+    
+    /* City manager style */
+    #city-manager {
+        position: absolute;
+        top: 10px;
+        left: 50px;
+        z-index: 1000;
+        background-color: white;
+        padding: 5px;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    #city-manager label {
+        font-weight: 600;
+        font-size: 10pt;
+    }
+    #city-manager select {
+        width: 100%;
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
         .geojson-label {
             background-color: transparent;
             border: none;
@@ -128,35 +132,35 @@
         }
 
         /* Media queries */
-        @media (max-width: 768px) {
-            .container {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto auto 1fr;
-                grid-template-areas:
-                    "Logo"
-                    "Side-Bar"
-                    "Map";
-            }
-            .Logo {
-                justify-content: center;
-                align-items: center;
-                height: 80px;
-            }
-            .Side-Bar {
-                padding: 10px;
-                height: auto;
-            }
-            .map-container {
-                height: calc(100vh - 160px);
-            }
+    @media (max-width: 768px) {
+        .container {
+            grid-template-columns: 1fr;
+            grid-template-rows: auto auto 1fr;
+            grid-template-areas:
+                "Logo"
+                "Side-Bar"
+                "Map";
         }
-    </style>
+        .Logo {
+            justify-content: center;
+            align-items: center;
+            height: 80px;
+        }
+        .Side-Bar {
+            max-height: 30vh;
+            overflow-y: auto;
+        }
+        .map-container {
+            height: calc(70vh - 80px);
+        }
+    }
+</style>
 </head>
 <body>
     <svg width="0" height="0">
     <defs>
-        <pattern id="hatchPattern" width="10" height="10" patternUnits="userSpaceOnUse">
-            <path d="M5,0 L5,10" style="stroke:grey; stroke-width:0.75" />
+        <pattern id="hatchPattern" width="5" height="10" patternUnits="userSpaceOnUse">
+            <path d="M5,0 L5,10" style="stroke:#3e3e3e; stroke-width:0.75" />
         </pattern>
     </defs>
 </svg>
@@ -175,6 +179,10 @@
                 Bu haritanın açıklaması burada yer alır. Açıklamanın bu kısmı yer doldurucu metin olarak kullanılıyor ve sola yaslanarak hizalanmıştır.
                 Açıklama kısmı sayfa düzenini ve içerik akışını koruyacak şekilde tasarlanmıştır.
             </p>
+        </div>
+        <!-- Map Container -->
+        <div class="map-container">
+            <div id="map"></div>
             <!-- City Manager -->
             <div id="city-manager">
                 <label for="cities">Şehirler:</label>
@@ -183,6 +191,7 @@
                 </select>
             </div>
         </div>
+    </div>
         <!-- Map Container -->
         <div class="map-container">
             <div id="map"></div>
@@ -328,16 +337,16 @@
 
         legend.onAdd = function(map) {
             var div = L.DomUtil.create('div', 'legend');
-            div.innerHTML = '<h4>Legend</h4>';
+            div.innerHTML = '<h4>Lejant</h4>';
             return div;
         };
 
         legend.addTo(map);
 
         function updateLegend() {
-    var legendDiv = document.querySelector('.legend');
-    legendDiv.innerHTML = '<h4>Lejant</h4>';
-    map.eachLayer(function(layer) {
+        var legendDiv = document.querySelector('.legend');
+        legendDiv.innerHTML = '<h4>Lejant</h4>';
+        map.eachLayer(function(layer) {
         if (layer instanceof L.GeoJSON) {
             var layerName = getLayerName(layer);
             if (layerName) {
