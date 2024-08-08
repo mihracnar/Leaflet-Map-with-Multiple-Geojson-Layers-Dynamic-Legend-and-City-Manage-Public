@@ -6,6 +6,8 @@
     <title>Leaflet Map with Multiple GeoJSON Layers, Dynamic Legend, and City Manager</title>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <!-- Leaflet Fullscreen CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.fullscreen@1.6.0/Control.FullScreen.css" />
     <!-- Leaflet MiniMap CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet-minimap/dist/Control.MiniMap.min.css" />
     <!-- Open Sans Font -->
@@ -201,6 +203,7 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <!-- Leaflet MiniMap JS -->
     <script src="https://unpkg.com/leaflet-minimap/dist/Control.MiniMap.min.js"></script>
+    <script src="https://unpkg.com/leaflet.fullscreen@1.6.0/Control.FullScreen.js"></script>
     <script>
         // Map center and initial zoom level
         var centerCoordinates = [39.79273915299965, 36.01606133613108];
@@ -478,6 +481,19 @@
                 map.setView(city.center, city.zoom);
             }
         });
+
+        // Create the fullscreen control
+        var fullscreenControl = L.control.fullscreen({
+            position: 'topleft', // this is the position in the corner the control will be shown
+            title: 'Tam ekran modu', // this is the tooltip that will display on hover
+            titleCancel: 'Tam ekran modundan çık', // this is the tooltip that will display on hover when fullscreen is active
+            forceSeparateButton: true, // this forces separate button instead of combining it with zoom buttons
+            forcePseudoFullscreen: true, // if true, fullscreen to page width and height
+            fullscreenElement: false // Dom element to render in full screen, false by default (body)
+        });
+        
+        // Add the fullscreen control to the map
+        map.addControl(fullscreenControl);
     </script>
 </body>
 </html>
