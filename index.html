@@ -226,7 +226,7 @@
         });
 
         // Base layer
-        var baseLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/light_nolabels/{z}/{x}/{y}.png', {
+        var baseLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; <a href="https://carto.com/">Carto</a>',
             noWrap: true
@@ -297,12 +297,12 @@
         
         loadGeoJSONLayer("Tüm İl Sınırları", "https://raw.githubusercontent.com/mihracnar/Leaflet-Map-with-Multiple-Geojson-Layers-Dynamic-Legend-and-City-Manage-Public/3a77412da592008be7669bae5f6c03db379f4897/Geojson/tum_iller_simplified.geojson", {
         color: 'red', // Dış sınır rengi
-        weight: 1.75, // Sınır kalınlığı
-        dashArray: '2, 2', // Kısa çizgiler
-        opacity: 0.95,
+        weight: 2, // Sınır kalınlığı
+        dashArray: '5, 5', // Kısa çizgiler
+        opacity: 1,
         fillColor: 'transparent', // İç renk, 'transparent' olarak ayarlandı
         fillOpacity: 0 // İç opaklık, görünmemesi için 0
-        }, 'City', false, 5);
+        }, 'City', false, 10);
         
         loadGeoJSONLayer("Üye Büyükşehir", "https://raw.githubusercontent.com/mihracnar/Leaflet-Map-with-Multiple-Geojson-Layers-Dynamic-Legend-and-City-Manage-Public/main/Geojson/uye_buyuksehir.geojson", {
         color: 'grey',
@@ -323,28 +323,28 @@
         }, '-', false, 3);
         
         loadGeoJSONLayer("Üye İlçe", "https://raw.githubusercontent.com/mihracnar/Leaflet-Map-with-Multiple-Geojson-Layers-Dynamic-Legend-and-City-Manage-Public/c8b533873595075f696886caff1313d19dd016de/Geojson/uye_ilce.geojson", {
-        color: '', // Dış sınır rengi
-        weight: 1, // Sınır kalınlığı
+        color: 'white', // Dış sınır rengi
+        weight: 2.5, // Sınır kalınlığı
         dashArray: '', // Kısa çizgiler
-        opacity: 0.30,
+        opacity: 0.45,
         fillColor: '#07b86d', // İç renk, 'transparent' olarak ayarlandı
         fillOpacity: 0.30, // İç opaklık, görünmemesi için 0
         }, '-', false, 2);
 
-        loadGeoJSONLayer("Tüm İlçe Sınırları", "https://raw.githubusercontent.com/mihracnar/Leaflet-Map-with-Multiple-Geojson-Layers-Dynamic-Legend-and-City-Manage-Public/cf5bdcef3c926da055fb560f74df55dc8198614e/Geojson/tum_ilce_sinirlari.geojson", {
-        color: 'grey', // Dış sınır rengi
+        loadGeoJSONLayer("Üye Belde", "https://raw.githubusercontent.com/mihracnar/Leaflet-Map-with-Multiple-Geojson-Layers-Dynamic-Legend-and-City-Manage-Public/eb34d5274c2cd05f02ad521ad30f02c0c802af1e/Geojson/uye_belde.geojson", {
+        color: '#ffffff', // Dış sınır rengi
         weight: 1, // Sınır kalınlığı
-        dashArray: '5, 2', // Kısa çizgiler
-        opacity: 0.45,
-        fillColor: 'transparent', // İç renk, 'transparent' olarak ayarlandı
-        fillOpacity: 0 // İç opaklık, görünmemesi için 0
-        }, '', false, 1);
-        
+        dashArray: '', // Kısa çizgiler
+        opacity: 0.5,
+        fillColor: '#ffb200', // İç renk, 'transparent' olarak ayarlandı
+        fillOpacity: 0.50, // İç opaklık, görünmemesi için 0
+        }, '-', false, 1);
+
         // Add more layers as needed
         
         // Layer Control
         var baseMaps = {
-            "Carto Light No Labels": baseLayer
+            "Carto Light All": baseLayer
         };
 
         var overlayMaps = {};
@@ -376,49 +376,49 @@
     var legendDiv = document.querySelector('.legend');
     legendDiv.innerHTML = '<h4>Lejant</h4>';
     map.eachLayer(function(layer) {
-        if (layer instanceof L.GeoJSON) {
-            var layerName = getLayerName(layer);
-            if (layerName) {
-                var style = layer.options.style;
-                var color = typeof style === 'function' ? style().color : style.color;
-                var fillColor = typeof style === 'function' ? style().fillColor : style.fillColor;
-                var weight = typeof style === 'function' ? style().weight : style.weight;
-                var dashArray = typeof style === 'function' ? style().dashArray : style.dashArray;
-                var fillOpacity = typeof style === 'function' ? style().fillOpacity : style.fillOpacity;
+    console.log(layer.options.zIndex); // Z-Index değerlerini kontrol eder
 
-                var legendItem = document.createElement('div');
-                legendItem.style.marginBottom = '5px';
+    if (layer instanceof L.GeoJSON) {
+        var layerName = getLayerName(layer);
+        if (layerName) {
+            var style = layer.options.style;
+            var color = typeof style === 'function' ? style().color : style.color;
+            var fillColor = typeof style === 'function' ? style().fillColor : style.fillColor;
+            var weight = typeof style === 'function' ? style().weight : style.weight;
+            var dashArray = typeof style === 'function' ? style().dashArray : style.dashArray;
+            var fillOpacity = typeof style === 'function' ? style().fillOpacity : style.fillOpacity;
 
-                if (fillColor && fillOpacity !== undefined) {
-                    // Hem iç renkli hem de dış çizgili polygon için
-                    legendItem.innerHTML = `
-                        <svg width="20" height="20" style="vertical-align: middle;">
-                            <rect width="20" height="20" fill="${fillColor}" stroke="${color}" stroke-width="${weight}" stroke-dasharray="${dashArray}" fill-opacity="${fillOpacity}"/>
-                        </svg>
-                        <span style="margin-left: 5px;">${layerName}</span>
-                    `;
-                } else if (weight > 0 && fillColor === 'transparent') {
-                    // Sadece dış çizgili polygon için
-                    legendItem.innerHTML = `
-                        <svg width="20" height="20" style="vertical-align: middle;">
-                            <rect width="20" height="20" fill="none" stroke="${color}" stroke-width="${weight}" stroke-dasharray="${dashArray}"/>
-                        </svg>
-                        <span style="margin-left: 5px;">${layerName}</span>
-                    `;
-                } else if (fillColor === 'transparent' && weight === 0) {
-                    // Dış çizgisi olmayan ve içi görünür polygon için
-                    legendItem.innerHTML = `
-                        <svg width="20" height="20" style="vertical-align: middle;">
-                            <rect width="20" height="20" fill="${fillColor}" fill-opacity="${fillOpacity}"/>
-                        </svg>
-                        <span style="margin-left: 5px;">${layerName}</span>
-                    `;
-                }
+            var legendItem = document.createElement('div');
+            legendItem.style.marginBottom = '5px';
 
-                legendDiv.appendChild(legendItem);
+            if (fillColor && fillOpacity !== undefined) {
+                legendItem.innerHTML = `
+                    <svg width="20" height="20" style="vertical-align: middle;">
+                        <rect width="20" height="20" fill="${fillColor}" stroke="${color}" stroke-width="${weight}" stroke-dasharray="${dashArray}" fill-opacity="${fillOpacity}"/>
+                    </svg>
+                    <span style="margin-left: 5px;">${layerName}</span>
+                `;
+            } else if (weight > 0 && fillColor === 'transparent') {
+                legendItem.innerHTML = `
+                    <svg width="20" height="20" style="vertical-align: middle;">
+                        <rect width="20" height="20" fill="none" stroke="${color}" stroke-width="${weight}" stroke-dasharray="${dashArray}"/>
+                    </svg>
+                    <span style="margin-left: 5px;">${layerName}</span>
+                `;
+            } else if (fillColor === 'transparent' && weight === 0) {
+                legendItem.innerHTML = `
+                    <svg width="20" height="20" style="vertical-align: middle;">
+                        <rect width="20" height="20" fill="${fillColor}" fill-opacity="${fillOpacity}"/>
+                    </svg>
+                    <span style="margin-left: 5px;">${layerName}</span>
+                `;
             }
+
+            legendDiv.appendChild(legendItem);
         }
-    });
+    }
+});
+
 }
 
         function getLayerName(layer) {
@@ -453,11 +453,11 @@
         // Cities (Bookmark) Manager
         var cities = {
             "Şehir seçiniz": {center: centerCoordinates, zoom: zoomLevel},
-            "İstanbul": {center: [41.0082, 28.9784], zoom: 10},
-            "Ankara": {center: [39.9334, 32.8597], zoom: 10},
-            "İzmir": {center: [38.4192, 27.1287], zoom: 11},
-            "Antalya": {center: [36.8841, 30.7056], zoom: 11},
-            "Adana": {center: [37.0017, 35.3289], zoom: 11}
+            "İstanbul": {center: [41.1150, 29.0726], zoom: 9},
+            "Ankara": {center: [39.9334, 32.8597], zoom: 8},
+            "İzmir": {center: [38.4192, 27.1287], zoom: 8},
+            "Antalya": {center: [36.8841, 30.7056], zoom: 8},
+            "Adana": {center: [37.0017, 35.3289], zoom: 8}
         };
 
         var citySelect = document.getElementById('cities');
