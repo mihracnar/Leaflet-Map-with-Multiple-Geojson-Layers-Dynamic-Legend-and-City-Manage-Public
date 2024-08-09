@@ -243,59 +243,83 @@
         // GeoJSON Layers
         var geoJSONLayers = {};
 
-        // Function to load GeoJSON layers
-        function loadGeoJSONLayer(name, url, style, labelProperty, useHatchPattern = false, zIndex = 0) {
-        fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            let layer = L.geoJSON(data, {
-                style: function (feature) {
-                    let appliedStyle = { ...style };
-                    
-                    if (useHatchPattern) {
-                        appliedStyle.fillColor = 'url(#hatchPattern)';
-                        appliedStyle.fillOpacity = 1;
-                    }
-
-                    return appliedStyle;
-                },
-                onEachFeature: function (feature, layer) {
-                    if (feature.properties && feature.properties[labelProperty]) {
-                        let labelPoint;
-
-                        if (feature.geometry.type === 'MultiPolygon') {
-                            // Find the largest polygon
-                            let largestPolygon = feature.geometry.coordinates.reduce((largest, polygon) => {
-                                let area = turf.area(turf.polygon(polygon));
-                                return area > largest.area ? { polygon, area } : largest;
-                            }, { polygon: null, area: 0 }).polygon;
-
-                            labelPoint = turf.centroid(turf.polygon(largestPolygon));
-                        } else {
-                            // For single polygons or other geometry types
-                            labelPoint = turf.centroid(feature);
+        // Function to load GeoJSON layers with formatted popups
+        function loadGeoJSONLayer(name, url, style, labelProperty, useHatchPattern = false, zIndex = 0, enablePopup = false, popupContent = '') {
+            fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                let layer = L.geoJSON(data, {
+                    style: function (feature) {
+                        let appliedStyle = { ...style };
+                        
+                        if (useHatchPattern) {
+                            appliedStyle.fillColor = 'url(#hatchPattern)';
+                            appliedStyle.fillOpacity = 1;
                         }
-
-                        L.marker(
-                            [labelPoint.geometry.coordinates[1], labelPoint.geometry.coordinates[0]],
-                            {
-                                icon: L.divIcon({
-                                    className: 'geojson-label',
-                                    html: feature.properties[labelProperty]
-                                }),
-                                interactive: false
+        
+                        return appliedStyle;
+                    },
+                    onEachFeature: function (feature, layer) {
+                        if (feature.properties && feature.properties[labelProperty]) {
+                            let labelPoint;
+        
+                            if (feature.geometry.type === 'MultiPolygon') {
+                                let largestPolygon = feature.geometry.coordinates.reduce((largest, polygon) => {
+                                    let area = turf.area(turf.polygon(polygon));
+                                    return area > largest.area ? { polygon, area } : largest;
+                                }, { polygon: null, area: 0 }).polygon;
+        
+                                labelPoint = turf.centroid(turf.polygon(largestPolygon));
+                            } else {
+                                labelPoint = turf.centroid(feature);
                             }
-                        ).addTo(map);
+        
+                            L.marker(
+                                [labelPoint.geometry.coordinates[1], labelPoint.geometry.coordinates[0]],
+                                {
+                                    icon: L.divIcon({
+                                        className: 'geojson-label',
+                                        html: feature.properties[labelProperty]
+                                    }),
+                                    interactive: false
+                                }
+                            ).addTo(map);
+                        }
+        
+                        // Pop-up ekleme, enablePopup true ise
+                        if (enablePopup && feature.properties) {
+                            let popupContentFormatted = popupContent;
+        
+                            // Replace placeholders with actual feature properties
+                            for (let property in feature.properties) {
+                                let placeholder = `{${property}}`;
+                                popupContentFormatted = popupContentFormatted.replace(new RegExp(placeholder, 'g'), feature.properties[property]);
+                            }
+        
+                            // Apply basic formatting
+                            popupContentFormatted = popupContentFormatted
+                                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+                                .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italics
+                                .replace(/#{1,3}(.*?)\n/g, (match, p1) => {
+                                    let level = match.split('#').length - 1;
+                                    return `<h${level}>${p1.trim()}</h${level}>`;
+                                }) // Headings
+                                .replace(/\[\[(.*?)\]\]/g, '<a href="$1">$1</a>') // Links
+                                .replace(/\[\[(.*?)\|(.*?)\]\]/g, '<a href="$1">$2</a>') // Links with text
+                                .replace(/\{\{(.*?)\}\}/g, '<img src="$1" alt="Image">'); // Images
+        
+                            layer.bindPopup(popupContentFormatted);
+                        }
                     }
-                }
+                });
+        
+                layer.setZIndex(zIndex);
+                geoJSONLayers[name] = layer;
+                updateLayerControl();
+                layer.addTo(map); // Add layer to map by default
             });
+        }
 
-            layer.setZIndex(zIndex);
-            geoJSONLayers[name] = layer;
-            updateLayerControl();
-            layer.addTo(map); // Add layer to map by default
-        });
-}
 
         // Load GeoJSON layers (replace with your GitHub URLs)
         
@@ -306,7 +330,7 @@
         opacity: 1,
         fillColor: 'transparent', // İç renk, 'transparent' olarak ayarlandı
         fillOpacity: 0 // İç opaklık, görünmemesi için 0
-        }, 'City', false, 9999);
+        }, 'City', false, 9999, false);
         
         var uyebuyuksehir = loadGeoJSONLayer("Üye Büyükşehir", "https://raw.githubusercontent.com/mihracnar/Leaflet-Map-with-Multiple-Geojson-Layers-Dynamic-Legend-and-City-Manage-Public/main/Geojson/uye_buyuksehir.geojson", {
         color: 'grey',
@@ -315,7 +339,7 @@
         opacity: 0,
         fillColor: 'grey',
         fillOpacity: 0.2
-        }, 'your-label-property', true, 3);
+        }, 'your-label-property', true, 3, false);
         
         var uyeIlmerkezilce = loadGeoJSONLayer("Üye İl Merkez İlçe", "https://raw.githubusercontent.com/mihracnar/Leaflet-Map-with-Multiple-Geojson-Layers-Dynamic-Legend-and-City-Manage-Public/519158bef5ef2c644bcc35051d1c297664c49d4c/Geojson/uye_il_merkez_ilce.geojson", {
         color: '#ff2727 ', // Dış sınır rengi
@@ -324,7 +348,7 @@
         opacity: 0.30,
         fillColor: '#ff2727 ', // İç renk, 'transparent' olarak ayarlandı
         fillOpacity: 0.30, // İç opaklık, görünmemesi için 0
-        }, '-', false, 2);
+        }, '-', false, 2,true, "<h3>{name}</h3><p><strong>Type:</strong> {type}<br><em>Description:</em> {description}</p><p>More info: [[http://example.com|Link]]</p><p>Image: {{http://example.com/image.jpg}}</p>");
         
         var uyeIlce = loadGeoJSONLayer("Üye İlçe", "https://raw.githubusercontent.com/mihracnar/Leaflet-Map-with-Multiple-Geojson-Layers-Dynamic-Legend-and-City-Manage-Public/c8b533873595075f696886caff1313d19dd016de/Geojson/uye_ilce.geojson", {
         color: 'white', // Dış sınır rengi
@@ -333,7 +357,7 @@
         opacity: 0.45,
         fillColor: '#07b86d', // İç renk, 'transparent' olarak ayarlandı
         fillOpacity: 0.30, // İç opaklık, görünmemesi için 0
-        }, '-', false, 0);
+        }, '-', false, 0, true, "<h3>{name}</h3><p><strong>Type:</strong> {type}<br><em>Description:</em> {description}</p><p>More info: [[http://example.com|Link]]</p><p>Image: {{http://example.com/image.jpg}}</p>");
 
         var uyeBelde = loadGeoJSONLayer("Üye Belde", "https://raw.githubusercontent.com/mihracnar/Leaflet-Map-with-Multiple-Geojson-Layers-Dynamic-Legend-and-City-Manage-Public/eb34d5274c2cd05f02ad521ad30f02c0c802af1e/Geojson/uye_belde.geojson", {
         color: '#ffffff', // Dış sınır rengi
@@ -342,7 +366,7 @@
         opacity: 0.5,
         fillColor: '#ffb200', // İç renk, 'transparent' olarak ayarlandı
         fillOpacity: 0.50, // İç opaklık, görünmemesi için 0
-        }, '-', false, 1);
+        }, '-', false, 1, true, "<h3>{name}</h3><p><strong>Type:</strong> {type}<br><em>Description:</em> {description}</p><p>More info: [[http://example.com|Link]]</p><p>Image: {{http://example.com/image.jpg}}</p>");
 
         // Add more layers as needed
         
