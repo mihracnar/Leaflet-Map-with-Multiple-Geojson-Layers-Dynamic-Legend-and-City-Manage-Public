@@ -180,6 +180,18 @@
         padding-top: 10px;
         border-top: 1px solid #ccc;
     }
+    /* Popup genişliği için özel bir stil ekleyin */
+    .leaflet-popup-content-wrapper {
+    width: 300px !important; /* Burada genişliği ihtiyacınıza göre ayarlayabilirsiniz */
+    font-size: 12px; /* Font boyutunu da özelleştirebilirsiniz. */
+    }
+    .leaflet-popup-content {
+    max-width: 300px; /* Varsayılan 300px'dir. İstediğiniz genişliği buraya girin. */
+    font-size: 12px; /* Font boyutunu da özelleştirebilirsiniz. */
+    }
+
+}
+
 </style>
 </head>
 <body>
@@ -365,7 +377,7 @@
         opacity: 0,
         fillColor: 'grey',
         fillOpacity: 0.2
-        }, 'your-label-property', true, 3, true, "<h3>{City}</h3><strong>Belediye Türü:</strong> Büyükşehir<br>    <strong>Doğal Sit Alanı S.:</strong>{DOĞAL SİT}<br>    <strong>Arkeolojik Sit Alanı S.:</strong>{ARKEOLOJİK SİT}<br>  <strong>Tarihi Sit Alanı S.:</strong>{TARİHİ SİT}<br>  <strong>Kentsel Sit Alanı S.:</strong>{KENTSEL SİT}<br> <strong>Toplam Korunması Gerekli Taşınmaz Kültür Varlığı S.:</strong>{Toplam Korunması Gerekli \nTaşınmaz Kültür Varlığı}");
+        }, 'your-label-property', true, 3, true, "<h2>{City}</h2><strong>Belediye Türü:</strong> Büyükşehir<br>    <strong>Doğal Sit Alanı S.:</strong>{DOĞAL SİT}<br>    <strong>Arkeolojik Sit Alanı S.:</strong>{ARKEOLOJİK SİT}<br>  <strong>Tarihi Sit Alanı S.:</strong>{TARİHİ SİT}<br>  <strong>Kentsel Sit Alanı S.:</strong>{KENTSEL SİT}<br> <strong>Toplam Korunması Gerekli Taşınmaz Kültür Varlığı S.:</strong>{Toplam Korunması Gerekli \nTaşınmaz Kültür Varlığı}");
         
         var uyeIlmerkezilce = loadGeoJSONLayer("Üye İl Merkez İlçe", "https://raw.githubusercontent.com/mihracnar/Leaflet-Map-with-Multiple-Geojson-Layers-Dynamic-Legend-and-City-Manage-Public/519158bef5ef2c644bcc35051d1c297664c49d4c/Geojson/uye_il_merkez_ilce.geojson", {
         color: '#ff2727 ', // Dış sınır rengi
@@ -374,7 +386,7 @@
         opacity: 0.30,
         fillColor: '#ff2727 ', // İç renk, 'transparent' olarak ayarlandı
         fillOpacity: 0.30, // İç opaklık, görünmemesi için 0
-        }, '-', false, 2, true, "<h3>{City}</h3><strong>Belediye Türü:</strong> İl Merkez İlçe<br>    <strong>Doğal Sit Alanı S.:</strong>{DOĞAL SİT}<br>    <strong>Arkeolojik Sit Alanı S.:</strong>{ARKEOLOJİK SİT}<br>  <strong>Tarihi Sit Alanı S.:</strong>{TARİHİ SİT}<br>  <strong>Kentsel Sit Alanı S.:</strong>{KENTSEL SİT}<br> <strong>Toplam Korunması Gerekli Taşınmaz Kültür Varlığı S.:</strong>{Toplam Korunması Gerekli \nTaşınmaz Kültür Varlığı}");
+        }, '-', false, 2, true, "<h2>{City}</h2><strong>Belediye Türü:</strong> İl Merkez İlçe<br>    <strong>Doğal Sit Alanı S.:</strong>{DOĞAL SİT}<br>    <strong>Arkeolojik Sit Alanı S.:</strong>{ARKEOLOJİK SİT}<br>  <strong>Tarihi Sit Alanı S.:</strong>{TARİHİ SİT}<br>  <strong>Kentsel Sit Alanı S.:</strong>{KENTSEL SİT}<br> <strong>Toplam Korunması Gerekli Taşınmaz Kültür Varlığı S.:</strong>{Toplam Korunması Gerekli \nTaşınmaz Kültür Varlığı}");
         
         var uyeIlce = loadGeoJSONLayer("Üye İlçe", "https://raw.githubusercontent.com/mihracnar/Leaflet-Map-with-Multiple-Geojson-Layers-Dynamic-Legend-and-City-Manage-Public/c8b533873595075f696886caff1313d19dd016de/Geojson/uye_ilce.geojson", {
         color: 'white', // Dış sınır rengi
@@ -392,7 +404,7 @@
         opacity: 0.5,
         fillColor: '#ffb200', // İç renk, 'transparent' olarak ayarlandı
         fillOpacity: 0.50, // İç opaklık, görünmemesi için 0
-        }, '-', false, 1, true, "<h3>{belde_proper}</h3><strong>Belediye Türü:</strong> Belde<br>    <strong>Doğal Sit Alanı S.:</strong>{DOĞAL SİT}<br>    <strong>Arkeolojik Sit Alanı S.:</strong>{ARKEOLOJİK SİT}<br>  <strong>Tarihi Sit Alanı S.:</strong>{TARİHİ SİT}<br>  <strong>Kentsel Sit Alanı S.:</strong>{KENTSEL SİT}<br> <strong>Toplam Korunması Gerekli Taşınmaz Kültür Varlığı S.:</strong>{Toplam Korunması Gerekli \nTaşınmaz Kültür Varlığı}");
+        }, '-', false, 1, true, "<h2>{belde_proper}</h2><strong>Belediye Türü:</strong> Belde<br>    <strong>Doğal Sit Alanı S.:</strong>{DOĞAL SİT}<br>    <strong>Arkeolojik Sit Alanı S.:</strong>{ARKEOLOJİK SİT}<br>  <strong>Tarihi Sit Alanı S.:</strong>{TARİHİ SİT}<br>  <strong>Kentsel Sit Alanı S.:</strong>{KENTSEL SİT}<br> <strong>Toplam Korunması Gerekli Taşınmaz Kültür Varlığı S.:</strong>{Toplam Korunması Gerekli \nTaşınmaz Kültür Varlığı}");
 
         // Add more layers as needed
 
