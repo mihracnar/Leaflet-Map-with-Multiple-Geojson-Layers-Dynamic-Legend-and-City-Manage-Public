@@ -157,6 +157,29 @@
             height: calc(70vh - 80px);
         }
     }
+    
+    .layer-selector {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    .layer-selector button {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 5px;
+        margin: 2px 0;
+        background: none;
+        border: none;
+        cursor: pointer;
+    }
+    .layer-selector button:hover {
+        background-color: #f0f0f0;
+    }
+    .layer-info {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #ccc;
+    }
 </style>
 </head>
 <body>
@@ -290,23 +313,23 @@
                         if (enablePopup && feature.properties) {
                             let popupContentFormatted = popupContent;
         
-                            // Replace placeholders with actual feature properties
+                            // Yer tutucuları gerçek özelliklerle değiştir
                             for (let property in feature.properties) {
                                 let placeholder = `{${property}}`;
                                 popupContentFormatted = popupContentFormatted.replace(new RegExp(placeholder, 'g'), feature.properties[property]);
                             }
         
-                            // Apply basic formatting
+                            // Temel formatlama uygula
                             popupContentFormatted = popupContentFormatted
-                                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
-                                .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italics
+                                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Kalın
+                                .replace(/\*(.*?)\*/g, '<em>$1</em>') // İtalik
                                 .replace(/#{1,3}(.*?)\n/g, (match, p1) => {
                                     let level = match.split('#').length - 1;
                                     return `<h${level}>${p1.trim()}</h${level}>`;
-                                }) // Headings
-                                .replace(/\[\[(.*?)\]\]/g, '<a href="$1">$1</a>') // Links
-                                .replace(/\[\[(.*?)\|(.*?)\]\]/g, '<a href="$1">$2</a>') // Links with text
-                                .replace(/\{\{(.*?)\}\}/g, '<img src="$1" alt="Image">'); // Images
+                                }) // Başlıklar
+                                .replace(/\[\[(.*?)\]\]/g, '<a href="$1">$1</a>') // Bağlantılar
+                                .replace(/\[\[(.*?)\|(.*?)\]\]/g, '<a href="$1">$2</a>') // Bağlantılar
+                                .replace(/\{\{(.*?)\}\}/g, '<img src="$1" alt="Resim">'); // Resimler
         
                             layer.bindPopup(popupContentFormatted);
                         }
@@ -315,10 +338,14 @@
         
                 layer.setZIndex(zIndex);
                 geoJSONLayers[name] = layer;
+                geoJSONLayers[name].options.enablePopup = enablePopup;
+                geoJSONLayers[name].options.popupContent = popupContent;
                 updateLayerControl();
-                layer.addTo(map); // Add layer to map by default
+                layer.addTo(map); // Katmanı haritaya ekle
             });
         }
+
+
 
 
         // Load GeoJSON layers (replace with your GitHub URLs)
@@ -339,7 +366,7 @@
         opacity: 0,
         fillColor: 'grey',
         fillOpacity: 0.2
-        }, 'your-label-property', true, 3, false);
+        }, 'your-label-property', true, 3, true, "<h3>{City}</h3><strong>Belediye Türü:</strong> Büyükşehir");
         
         var uyeIlmerkezilce = loadGeoJSONLayer("Üye İl Merkez İlçe", "https://raw.githubusercontent.com/mihracnar/Leaflet-Map-with-Multiple-Geojson-Layers-Dynamic-Legend-and-City-Manage-Public/519158bef5ef2c644bcc35051d1c297664c49d4c/Geojson/uye_il_merkez_ilce.geojson", {
         color: '#ff2727 ', // Dış sınır rengi
@@ -369,8 +396,76 @@
         }, '-', false, 1, true, "<h3>{belde_proper}</h3><strong>Belediye Türü:</strong> Belde");
 
         // Add more layers as needed
+
+
+        // Katman seçici popup ve katman bilgilerini göstermek için olay dinleyicisi
+        map.on('click', function(e) {
+            var layers = [];
+            map.eachLayer(function(layer) {
+                if (layer instanceof L.GeoJSON) {
+                    layer.eachLayer(function(feature) {
+                        if (feature.getBounds().contains(e.latlng)) {
+                            var layerName = getLayerName(layer);
+                            var layerData = geoJSONLayers[layerName];
+                            if (layerData && layerData.options.enablePopup) {
+                                layers.push({
+                                    name: layerName,
+                                    feature: feature.feature,
+                                    popupContent: layerData.options.popupContent
+                                });
+                            }
+                        }
+                    });
+                }
+            });
         
+            if (layers.length > 0) {
+                var popupContent = '<div class="layer-selector">';
+                popupContent += '<h4>Katmanlar:</h4>';
+                layers.forEach(function(layer, index) {
+                    popupContent += '<button onclick="showLayerInfo(' + index + ')">' + layer.name + '</button>';
+                });
+                popupContent += '</div>';
+                popupContent += '<div id="layer-info" class="layer-info"></div>';
         
+                var popup = L.popup()
+                    .setLatLng(e.latlng)
+                    .setContent(popupContent)
+                    .openOn(map);
+        
+                // Global değişken olarak layers'ı sakla
+                window.popupLayers = layers;
+            }
+        });
+        
+        // Seçilen katman hakkında bilgi gösteren işlev
+        function showLayerInfo(index) {
+            var layer = window.popupLayers[index];
+            var infoContent = '<h4>' + layer.name + '</h4>';
+            
+            // Popup içeriğini formatla
+            var popupContentFormatted = layer.popupContent;
+            for (var prop in layer.feature.properties) {
+                var placeholder = `{${prop}}`;
+                popupContentFormatted = popupContentFormatted.replace(new RegExp(placeholder, 'g'), layer.feature.properties[prop]);
+            }
+            
+            // Temel formatlama uygula
+            popupContentFormatted = popupContentFormatted
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Kalın
+                .replace(/\*(.*?)\*/g, '<em>$1</em>') // İtalik
+                .replace(/#{1,3}(.*?)\n/g, (match, p1) => {
+                    var level = match.split('#').length - 1;
+                    return `<h${level}>${p1.trim()}</h${level}>`;
+                }) // Başlıklar
+                .replace(/\[\[(.*?)\]\]/g, '<a href="$1">$1</a>') // Bağlantılar
+                .replace(/\[\[(.*?)\|(.*?)\]\]/g, '<a href="$1">$2</a>') // Bağlantılar
+                .replace(/\{\{(.*?)\}\}/g, '<img src="$1" alt="Resim">'); // Resimler
+        
+            document.getElementById('layer-info').innerHTML = infoContent + popupContentFormatted;
+        }
+
+
         // Layer Control
         var baseMaps = {
             "Carto Light All": baseLayer,
