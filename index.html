@@ -352,7 +352,7 @@
         
         var ilSinirlari = loadGeoJSONLayer("Tüm İl Sınırları", "https://raw.githubusercontent.com/mihracnar/Leaflet-Map-with-Multiple-Geojson-Layers-Dynamic-Legend-and-City-Manage-Public/3a77412da592008be7669bae5f6c03db379f4897/Geojson/tum_iller_simplified.geojson", {
         color: 'red', // Dış sınır rengi
-        weight: 2, // Sınır kalınlığı
+        weight: 1.5, // Sınır kalınlığı
         dashArray: '5, 5', // Kısa çizgiler
         opacity: 1,
         fillColor: 'transparent', // İç renk, 'transparent' olarak ayarlandı
@@ -400,43 +400,59 @@
 
         // Katman seçici popup ve katman bilgilerini göstermek için olay dinleyicisi
         map.on('click', function(e) {
-            var layers = [];
-            map.eachLayer(function(layer) {
-                if (layer instanceof L.GeoJSON) {
-                    layer.eachLayer(function(feature) {
-                        if (feature.getBounds().contains(e.latlng)) {
-                            var layerName = getLayerName(layer);
-                            var layerData = geoJSONLayers[layerName];
-                            if (layerData && layerData.options.enablePopup) {
-                                layers.push({
-                                    name: layerName,
-                                    feature: feature.feature,
-                                    popupContent: layerData.options.popupContent
-                                });
-                            }
+    console.log('Map clicked at:', e.latlng);  // Bu satır tıklamanın algılanıp algılanmadığını kontrol eder
+
+    var layers = [];
+    map.eachLayer(function(layer) {
+        if (layer instanceof L.GeoJSON) {
+            layer.eachLayer(function(feature) {
+                if (feature.feature && feature.feature.geometry) {
+                    var point = turf.point([e.latlng.lng, e.latlng.lat]);
+                    var isInside = false;
+
+                    if (feature.feature.geometry.type === 'Polygon') {
+                        isInside = turf.booleanPointInPolygon(point, feature.feature);
+                    } else if (feature.feature.geometry.type === 'MultiPolygon') {
+                        isInside = feature.feature.geometry.coordinates.some(function(polygonCoords) {
+                            return turf.booleanPointInPolygon(point, turf.polygon(polygonCoords));
+                        });
+                    }
+
+                    if (isInside) {
+                        var layerName = getLayerName(layer);
+                        var layerData = geoJSONLayers[layerName];
+                        if (layerData && layerData.options.enablePopup) {
+                            layers.push({
+                                name: layerName,
+                                feature: feature.feature,
+                                popupContent: layerData.options.popupContent
+                            });
                         }
-                    });
+                    }
                 }
             });
-        
-            if (layers.length > 0) {
-                var popupContent = '<div class="layer-selector">';
-                popupContent += '<h4>Katmanlar:</h4>';
-                layers.forEach(function(layer, index) {
-                    popupContent += '<button onclick="showLayerInfo(' + index + ')">' + layer.name + '</button>';
-                });
-                popupContent += '</div>';
-                popupContent += '<div id="layer-info" class="layer-info"></div>';
-        
-                var popup = L.popup()
-                    .setLatLng(e.latlng)
-                    .setContent(popupContent)
-                    .openOn(map);
-        
-                // Global değişken olarak layers'ı sakla
-                window.popupLayers = layers;
-            }
+        }
+    });
+
+    console.log('Layers found:', layers);  // Bu satır bulunan katmanları kontrol eder
+
+    if (layers.length > 0) {
+        var popupContent = '<div class="layer-selector">';
+        popupContent += '<h4>Katmanlar:</h4>';
+        layers.forEach(function(layer, index) {
+            popupContent += '<button onclick="showLayerInfo(' + index + ')">' + layer.name + '</button>';
         });
+        popupContent += '</div>';
+        popupContent += '<div id="layer-info" class="layer-info"></div>';
+
+        var popup = L.popup()
+            .setLatLng(e.latlng)
+            .setContent(popupContent)
+            .openOn(map);
+
+        window.popupLayers = layers;
+    }
+});
         
         // Seçilen katman hakkında bilgi gösteren işlev
         function showLayerInfo(index) {
